@@ -18,8 +18,11 @@ h1 {
 
 .app-note {
   font-size: 0.8rem;
-  text-align: center;
   margin: 0.2rem 0;
+}
+
+.app-note--center {
+  text-align: center;
 }
 
 #table, #plot-tabs {
