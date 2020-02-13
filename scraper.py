@@ -47,6 +47,12 @@ class DataEntry(peewee.Model):
     total_tracked = peewee.IntegerField(null=True)
     new_lifted = peewee.IntegerField(null=True)
     remaining_quarantined = peewee.IntegerField(null=True)
+    hb_total_confirmed = peewee.IntegerField(null=True)
+    hb_remaining_confirmed = peewee.IntegerField(null=True)
+    hb_remaining_severe = peewee.IntegerField(null=True)
+    hb_remaining_suspected = peewee.IntegerField(null=True)
+    hb_cured = peewee.IntegerField(null=True)
+    hb_death = peewee.IntegerField(null=True)
     hb_new_confirmed = peewee.IntegerField(null=True)
     hb_new_severe = peewee.IntegerField(null=True)
     hb_new_suspected = peewee.IntegerField(null=True)
@@ -139,24 +145,34 @@ def get_article(url):
 
 patterns = {
     "new_confirmed": r"新增\w*确诊(病例|患者)?(?P<new_confirmed>\d+)例",
-    "hb_new_confirmed": r"新增确诊(病例|患者)?(?P<new_confirmed>\d+)例（湖北省?(?P<hb_new_confirmed>\d+)例",
+    "hb_new_confirmed": r"(新增确诊(病例|患者)?(?P<new_confirmed>\d+)例（湖北省?(?P<hb_new_confirmed>\d+)例|^\s*湖北.*新增确诊(病例|患者)?(?P<hb_new_confirmed2>\d+)例)",
     "new_severe": r"新增重症(病例|患者)?(?P<new_severe>\d+)例",
-    "hb_new_severe": r"新增重症(病例|患者)?(?P<new_severe>\d+)例（湖北省?(?P<hb_new_severe>\d+)例",
+    "hb_new_severe": r"(新增重症(病例|患者)?(?P<new_severe>\d+)例（湖北省?(?P<hb_new_severe>\d+)例|^\s*湖北.*新增重症(病例|患者)?(?P<hb_new_severe2>\d+)例)",
     "new_death": r"新增死亡(病例|患者)?(?P<new_death>\d+)例",
-    "hb_new_death": r"新增死亡(病例|患者)?(?P<new_death>\d+)例（湖北省?(?P<hb_new_death>\d+)例",
+    "hb_new_death": r"(新增死亡(病例|患者)?(?P<new_death>\d+)例（湖北省?(?P<hb_new_death>\d+)例|^\s*湖北.*新增死亡(病例|患者)?(?P<hb_new_death2>\d+)例)",
     "new_suspected": r"新增疑似(病例|患者)?(?P<new_suspected>\d+)例",
-    "hb_new_suspected": r"新增疑似(病例|患者)?(?P<new_suspected>\d+)例（湖北省?(?P<hb_new_suspected>\d+)例",
+    "hb_new_suspected": r"(新增疑似(病例|患者)?(?P<new_suspected>\d+)例（湖北省?(?P<hb_new_suspected>\d+)例|^\s*湖北.*新增疑似(病例|患者)?(?P<hb_new_suspected2>\d+)例)",
     "new_cured": r"新增治愈出院(病例|患者)?(?P<new_cured>\d+)例",
-    "hb_new_cured": r"新增治愈出院(病例|患者)?(?P<new_cured>\d+)例（湖北省?(?P<hb_new_cured>\d+)例",
+    "hb_new_cured": r"(新增治愈出院(病例|患者)?(?P<new_cured>\d+)例（湖北省?(?P<hb_new_cured>\d+)例|^\s*湖北.*新增治愈出院(病例|患者)?(?P<hb_new_cured2>\d+)例)",
     "new_lifted": r"解除医学观察(的密切接触者)?(?P<new_lifted>\d+)人",
     "remaining_confirmed": r"现有确诊(病例|患者)?(?P<remaining_confirmed>\d+)例",
+    "hb_remaining_confirmed": r"^\s*湖北.*现有确诊(病例|患者)?(?P<hb_remaining_confirmed>\d+)例",
     "remaining_severe": r"(?<!新增)重症(病例|患者)?(?P<remaining_severe>\d+)例",
+    "hb_remaining_severe": r"^\s*湖北.*(?<!新增)重症(病例|患者)?(?P<hb_remaining_severe>\d+)例",
     "cured": r"(?<!新增)治愈出院(病例|患者)?(?P<cured>\d+)例",
+    "hb_cured": r"^\s*湖北.*(?<!新增)治愈出院(病例|患者)?(?P<hb_cured>\d+)例",
     "death": r"(?<!新增)死亡(病例|患者)?(?P<death>\d+)例",
-    "total_confirmed": r"累计报告\w*确诊(病例|患者)?(?P<total_confirmed>\d+)例",
+    "hb_death": r"^\s*湖北.*(?<!新增)死亡(病例|患者)?(?P<hb_death>\d+)例",
+    "total_confirmed": r"累计(报告)?\w*确诊(病例|患者)?(?P<total_confirmed>\d+)例",
+    "hb_total_confirmed": r"^\s*湖北.*累计(报告)?\w*确诊(病例|患者)?(?P<hb_total_confirmed>\d+)例",
     "remaining_suspected": r"(现有|共有|累计报告)疑似(病例|患者)?(?P<remaining_suspected>\d+)例",
+    "hb_remaining_suspected": r"^\s*湖北.*(现有|共有|累计报告)疑似(病例|患者)?(?P<hb_remaining_suspected>\d+)例",
     "total_tracked": r"追踪到密切接触者(?P<total_tracked>\d+)人",
     "remaining_quarantined": r"(尚在医学观察的密切接触者(?P<remaining_quarantined>\d+)人|(?P<remaining_quarantined2>\d+)人正在接受医学观察)",
+}
+
+negative_patterns = {
+    "new_severe": r"重症(病例|患者)减少(?P<new_severe>\d+)例",
 }
 
 introduced = {
@@ -172,6 +188,12 @@ introduced = {
     "hb_new_suspected": "02-01",
     "hb_new_cured": "02-01",
     "remaining_confirmed": "02-06",
+    "hb_total_confirmed": "02-12",
+    "hb_remaining_confirmed": "02-12",
+    "hb_remaining_severe": "02-12",
+    "hb_remaining_suspected": "02-12",
+    "hb_cured": "02-12",
+    "hb_death": "02-12",
 }
 
 
@@ -188,17 +210,27 @@ def parse_article(title, body):
     print(date_str)
     data = dict(date=date)
     for category, pattern in patterns.items():
-        if m := re.search(pattern, body):
+        if m := re.search(pattern, body, re.M):
             if m[category]:
                 count = int(m[category])
             else:
                 count = int(m[f"{category}2"])
             data[category] = count
             print(f"{count}\t{category}")
-        else:
-            if category in introduced and date_str < introduced[category]:
-                continue
-            logger.critical(f"{date}: no match for {category}: {pattern!r}")
+            continue
+        elif category in negative_patterns and (
+            m := re.search(negative_patterns[category], body, re.M)
+        ):
+            if m[category]:
+                count = -int(m[category])
+            else:
+                count = -int(m[f"{category}2"])
+            data[category] = count
+            print(f"{count}\t{category}")
+            continue
+        if category in introduced and date_str < introduced[category]:
+            continue
+        logger.critical(f"{date}: no match for {category}: {pattern!r}")
     return data
 
 
@@ -234,6 +266,12 @@ def main():
                 "累计追踪",
                 "新排除",
                 "当前观察",
+                "湖北累计确诊",
+                "湖北当前确诊",
+                "湖北当前重症",
+                "湖北当前疑似",
+                "湖北治愈",
+                "湖北死亡",
                 "湖北新确诊",
                 "湖北新重症",
                 "湖北新疑似",
@@ -259,6 +297,12 @@ def main():
                     entry.total_tracked,
                     entry.new_lifted,
                     entry.remaining_quarantined,
+                    entry.hb_total_confirmed,
+                    entry.hb_remaining_confirmed,
+                    entry.hb_remaining_severe,
+                    entry.hb_remaining_suspected,
+                    entry.hb_cured,
+                    entry.hb_death,
                     entry.hb_new_confirmed,
                     entry.hb_new_severe,
                     entry.hb_new_suspected,
