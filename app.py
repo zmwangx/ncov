@@ -44,21 +44,24 @@ def category_bar(df, category, color):
 
 
 def plot_categories(
-    df, categories, colors, stacked=False, overlay_category=None, overlay_color=None
+    df, categories, colors, stacked=False, overlay_categories=None, overlay_colors=None
 ):
     scatter_data = [
         category_scatter(df, category, color, stacked=stacked)
         for category, color in zip(categories, colors)
     ]
-    if not overlay_category:
+    if not overlay_categories:
         fig = go.Figure(data=scatter_data)
     else:
         fig = make_subplots(specs=[[{"secondary_y": True}]])
         for data in scatter_data:
             fig.add_trace(data, secondary_y=False)
-        fig.add_trace(
-            category_bar(df, overlay_category, overlay_color), secondary_y=True
-        )
+        bar_data = [
+            category_bar(df, category, color)
+            for category, color in zip(overlay_categories, overlay_colors)
+        ]
+        for data in bar_data:
+            fig.add_trace(data, secondary_y=True)
     fig.update_layout(
         plot_bgcolor="white",
         legend=dict(x=0, y=1),
@@ -75,7 +78,7 @@ def plot_categories(
     )
     fig.update_xaxes(tickformat="%m-%d", **axes_common_args)
     yaxes_common_args = dict(rangemode="tozero", **axes_common_args)
-    if not overlay_category:
+    if not overlay_categories:
         fig.update_yaxes(**yaxes_common_args)
     else:
         fig.update_yaxes(**yaxes_common_args, secondary_y=False)
@@ -89,6 +92,8 @@ def setup():
     df_display = df.rename(index=lambda d: d.strftime("%m-%d"))[::-1]
 
     df["重症比例"] = df["当前重症"] / df["当前确诊"]
+    df["治愈率"] = df["治愈"] / df["累计确诊"]
+    df["死亡率"] = df["死亡"] / df["累计确诊"]
 
     national_columns = [col for col in df_display.columns if not col.startswith("湖北")]
     hubei_columns = [col for col in df_display.columns if col.startswith("湖北")]
@@ -131,8 +136,8 @@ def setup():
                 df,
                 ["累计确诊", "当前确诊", "当前重症", "当前疑似"],
                 [confirmed_color, other_color1, severe_color, suspected_color],
-                overlay_category="重症比例",
-                overlay_color=severe_color,
+                overlay_categories=["重症比例"],
+                overlay_colors=[severe_color],
             ),
         ),
         (
@@ -141,7 +146,16 @@ def setup():
                 df, ["累计确诊", "当前疑似"], [confirmed_color, suspected_color], stacked=True
             ),
         ),
-        ("治愈、死亡走势", plot_categories(df, ["治愈", "死亡"], [cured_color, death_color])),
+        (
+            "治愈（率）、死亡（率）走势",
+            plot_categories(
+                df,
+                ["治愈", "死亡"],
+                [cured_color, death_color],
+                overlay_categories=["治愈率", "死亡率"],
+                overlay_colors=[cured_color, death_color],
+            ),
+        ),
         (
             "每日新确诊、重症、疑似走势",
             plot_categories(
