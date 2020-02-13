@@ -60,6 +60,16 @@ class DataEntry(peewee.Model):
     class Meta:
         database = database
 
+    # Calculate remaining confirmed when official report does not
+    # include this stat.
+    @property
+    def remaining_confirmed_calc(self):
+        if self.remaining_confirmed is not None:
+            return self.remaining_confirmed
+        if self.cured is not None and self.death is not None:
+            return self.total_confirmed - self.cured - self.death
+        return None
+
 
 database.create_tables([DataEntry], safe=True)
 
@@ -236,7 +246,7 @@ def main():
                 [
                     entry.date.strftime("%Y-%m-%d"),
                     entry.total_confirmed,
-                    entry.remaining_confirmed,
+                    entry.remaining_confirmed_calc,
                     entry.remaining_severe,
                     entry.remaining_suspected,
                     entry.cured,
