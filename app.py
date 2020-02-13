@@ -64,7 +64,7 @@ def plot_categories(
             fig.add_trace(data, secondary_y=True)
     fig.update_layout(
         plot_bgcolor="white",
-        legend=dict(x=0, y=1),
+        legend=dict(x=0, y=1, bgcolor="rgba(255, 255, 255, 0.5)"),
         margin=go.layout.Margin(l=20, r=20, b=40, t=40, pad=0),
         hovermode="x",
         bargap=0.4,
