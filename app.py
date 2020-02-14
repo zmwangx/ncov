@@ -98,26 +98,32 @@ def setup():
     national_columns = [col for col in df_display.columns if not col.startswith("湖北")]
     hubei_columns = [col for col in df_display.columns if col.startswith("湖北")]
     tables = [
-        dt.DataTable(
-            columns=[{"name": "", "id": "category"}]
-            + [{"name": date, "id": date} for date in df_display.index],
-            data=[
-                {"category": series.name, **series.to_dict()}
-                for series in df_display[cols].to_dict("series").values()
-            ],
-            style_table={"overflowX": "scroll"},
-            style_header={
-                "backgroundColor": "rgb(230, 230, 230)",
-                "fontWeight": "bold",
-            },
-            style_cell_conditional=[
-                {"if": {"column_id": "category"}, "textAlign": "center"}
-            ],
-            style_data_conditional=[
-                {"if": {"row_index": "odd"}, "backgroundColor": "rgb(248, 248, 248)",}
-            ],
+        (
+            label,
+            dt.DataTable(
+                columns=[{"name": "", "id": "category"}]
+                + [{"name": date, "id": date} for date in df_display.index],
+                data=[
+                    {"category": series.name, **series.to_dict()}
+                    for series in df_display[cols].to_dict("series").values()
+                ],
+                style_table={"overflowX": "scroll"},
+                style_header={
+                    "backgroundColor": "rgb(230, 230, 230)",
+                    "fontWeight": "bold",
+                },
+                style_cell_conditional=[
+                    {"if": {"column_id": "category"}, "textAlign": "center"}
+                ],
+                style_data_conditional=[
+                    {
+                        "if": {"row_index": "odd"},
+                        "backgroundColor": "rgb(248, 248, 248)",
+                    }
+                ],
+            ),
         )
-        for cols in (national_columns, hubei_columns)
+        for label, cols in (("全国数据", national_columns), ("湖北数据", hubei_columns))
     ]
 
     confirmed_color = "#f06061"
@@ -178,7 +184,19 @@ def setup():
                 """<p class="app-note app-note--center">全部数据来自<a href="http://www.nhc.gov.cn/yjb/pqt/new_list.shtml" target="_blank">国家卫生健康委员会卫生应急办公室网站</a></p>
                 <p class="app-note app-note--center">更多数据：<a href="https://news.qq.com/zt2020/page/feiyan.htm" target="_blank">腾讯新闻疫情实时追踪<a></p>"""
             ),
-            *tables,
+            dcc.Tabs(
+                [
+                    dcc.Tab(
+                        label=label,
+                        children=[table],
+                        className="app-tab",
+                        selected_className="app-tab--selected",
+                    )
+                    for label, table in tables
+                ],
+                id="table-tabs",
+                className="app-tabs-container",
+            ),
             DangerouslySetInnerHTML(
                 """<p class="app-note">注1：2月6日前卫健委未直接发布“当前确诊”数据，表中数据系通过“当前确诊=累计确诊&minus;治愈&minus;死亡”计算补充。该计算方法与2月6日起卫健委直接发布的数据相符。</p>"""
             ),
@@ -197,6 +215,7 @@ def setup():
                                         "toggleSpikelines",
                                     ],
                                 },
+                                className="app-plot",
                             )
                         ],
                         className="app-tab",
