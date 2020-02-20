@@ -82,7 +82,7 @@ def plot_categories(
         fig.update_yaxes(**yaxes_common_args)
     else:
         fig.update_yaxes(**yaxes_common_args, secondary_y=False)
-        fig.update_yaxes(**yaxes_common_args, tickformat=".0%", secondary_y=True)
+        fig.update_yaxes(**yaxes_common_args, tickformat=".1%", secondary_y=True)
         fig.update_yaxes(gridcolor="white", secondary_y=True)
     return fig
 
