@@ -94,6 +94,28 @@ class DataEntry(peewee.Model):
                 return self.hb_remaining_severe - prev_day_entry.hb_remaining_severe
         return None
 
+    def __getattr__(self, name):
+        if not name.startswith("not_hb_"):
+            raise AttributeError
+        national_attr = name[7:]
+        national_val = getattr(self, national_attr)
+        if national_val is None:
+            try:
+                national_val = getattr(self, f"{national_attr}_calc")
+            except AttributeError:
+                pass
+        hb_attr = name[4:]
+        hb_val = getattr(self, hb_attr)
+        if hb_val is None:
+            try:
+                hb_val = getattr(self, f"{hb_attr}_calc")
+            except AttributeError:
+                pass
+        if national_val is not None and hb_val is not None:
+            return national_val - hb_val
+        else:
+            return None
+
 
 database.create_tables([DataEntry], safe=True)
 
@@ -299,6 +321,17 @@ def main():
                 "湖北新疑似",
                 "湖北新治愈",
                 "湖北新死亡",
+                "非湖北累计确诊",
+                "非湖北当前确诊",
+                "非湖北当前重症",
+                "非湖北当前疑似",
+                "非湖北治愈",
+                "非湖北死亡",
+                "非湖北新确诊",
+                "非湖北新重症",
+                "非湖北新疑似",
+                "非湖北新治愈",
+                "非湖北新死亡",
             ]
         )
         for entry in list(DataEntry.select().order_by(DataEntry.date)):
@@ -330,6 +363,17 @@ def main():
                     entry.hb_new_suspected,
                     entry.hb_new_cured,
                     entry.hb_new_death,
+                    entry.not_hb_total_confirmed,
+                    entry.not_hb_remaining_confirmed,
+                    entry.not_hb_remaining_severe,
+                    entry.not_hb_remaining_suspected,
+                    entry.not_hb_cured,
+                    entry.not_hb_death,
+                    entry.not_hb_new_confirmed,
+                    entry.not_hb_new_severe,
+                    entry.not_hb_new_suspected,
+                    entry.not_hb_new_cured,
+                    entry.not_hb_new_death,
                 ]
             )
 

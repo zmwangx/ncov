@@ -94,9 +94,13 @@ def setup():
     df["重症比例"] = df["当前重症"] / df["当前确诊"]
     df["治愈率"] = df["治愈"] / df["累计确诊"]
     df["死亡率"] = df["死亡"] / df["累计确诊"]
+    df["非湖北重症比例"] = df["非湖北当前重症"] / df["非湖北当前确诊"]
+    df["非湖北治愈率"] = df["非湖北治愈"] / df["非湖北累计确诊"]
+    df["非湖北死亡率"] = df["非湖北死亡"] / df["非湖北累计确诊"]
 
-    national_columns = [col for col in df_display.columns if not col.startswith("湖北")]
+    national_columns = [col for col in df_display.columns if "湖北" not in col]
     hubei_columns = [col for col in df_display.columns if col.startswith("湖北")]
+    outside_hubei_columns = [col for col in df_display.columns if col.startswith("非湖北")]
     tables = [
         (
             label,
@@ -123,7 +127,11 @@ def setup():
                 ],
             ),
         )
-        for label, cols in (("全国数据", national_columns), ("湖北数据", hubei_columns))
+        for label, cols in (
+            ("全国数据", national_columns),
+            ("湖北数据", hubei_columns),
+            ("非湖北数据", outside_hubei_columns),
+        )
     ]
 
     confirmed_color = "#f06061"
@@ -135,7 +143,7 @@ def setup():
     other_color2 = "#3399ff"
     other_color3 = "#9900ff"
 
-    figs = [
+    figs1 = [
         (
             "确诊、重症及其比例、疑似走势",
             plot_categories(
@@ -177,6 +185,35 @@ def setup():
         ),
     ]
 
+    figs2 = [
+        (
+            "非湖北确诊、重症及其比例、疑似走势",
+            plot_categories(
+                df,
+                ["非湖北累计确诊", "非湖北当前确诊", "非湖北当前重症", "非湖北当前疑似"],
+                [confirmed_color, other_color1, severe_color, suspected_color],
+                overlay_categories=["非湖北重症比例"],
+                overlay_colors=[severe_color],
+            ),
+        ),
+        (
+            "非湖北治愈（率）、死亡（率）走势",
+            plot_categories(
+                df,
+                ["非湖北治愈", "非湖北死亡"],
+                [cured_color, death_color],
+                overlay_categories=["非湖北治愈率", "非湖北死亡率"],
+                overlay_colors=[cured_color, death_color],
+            ),
+        ),
+        (
+            "湖北内外累计确诊对比",
+            plot_categories(
+                df, ["湖北累计确诊", "非湖北累计确诊"], [severe_color, confirmed_color], stacked=True
+            ),
+        ),
+    ]
+
     app.layout = html.Div(
         children=[
             html.H1(children="新型冠状病毒肺炎疫情历史数据"),
@@ -201,34 +238,37 @@ def setup():
                 """<p class="app-note">注1：2月6日前卫健委未直接发布“当前确诊”数据，表中数据系通过“当前确诊=累计确诊&minus;治愈&minus;死亡”计算补充。该计算方法与2月6日起卫健委直接发布的数据相符。</p>
                 <p class="app-note">注2：2月12日起卫建委未直接发布“湖北新重症”数据，表中数据系通过“湖北当前重症”较前日的增量计算补充。该计算方法与2月12日前直接发布的数据相符。</p>
                 <p class="app-note">注3：2月12日前部分国家卫建委未公示的湖北省数据来自<a href="http://wjw.hubei.gov.cn/fbjd/tzgg/index.shtml" target="_blank">湖北省卫建委网站</a>。</p>
+                <p class="app-note">注4：非湖北数据仅限我国，系相应全国数据减去相应湖北数据所得。</p>
                 """
             ),
-            dcc.Tabs(
-                [
-                    dcc.Tab(
-                        label=label,
-                        children=[
-                            dcc.Graph(
-                                figure=fig,
-                                config={
-                                    "displaylogo": False,
-                                    "modeBarButtonsToRemove": [
-                                        "pan2d",
-                                        "lasso2d",
-                                        "toggleSpikelines",
-                                    ],
-                                },
-                                className="app-plot",
-                            )
-                        ],
-                        className="app-tab",
-                        selected_className="app-tab--selected",
-                    )
-                    for label, fig in figs
-                ],
-                id="plot-tabs",
-                className="app-tabs-container",
-            ),
+            *[
+                dcc.Tabs(
+                    [
+                        dcc.Tab(
+                            label=label,
+                            children=[
+                                dcc.Graph(
+                                    figure=fig,
+                                    config={
+                                        "displaylogo": False,
+                                        "modeBarButtonsToRemove": [
+                                            "pan2d",
+                                            "lasso2d",
+                                            "toggleSpikelines",
+                                        ],
+                                    },
+                                    className="app-plot",
+                                )
+                            ],
+                            className="app-tab",
+                            selected_className="app-tab--selected",
+                        )
+                        for label, fig in figs
+                    ],
+                    className="app-tabs-container",
+                )
+                for figs in (figs1, figs2)
+            ],
         ],
         className="app-container",
     )
