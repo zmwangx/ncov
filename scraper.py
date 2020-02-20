@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# Legacy data scraper for Health Commission of Hubei Province website.
+# http://wjw.hubei.gov.cn/fbjd/tzgg/index.shtml
+
 import contextlib
 import csv
 import datetime
@@ -19,7 +22,6 @@ logging.basicConfig(format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-title_pattern = re.compile(r"^(?P<until>截至)?(?P<month>\d+)月(?P<day>\d+)日\w+疫情(最新)?情况$")
 network_retry = tenacity.retry(
     wait=tenacity.wait_fixed(2), stop=tenacity.stop_after_attempt(3)
 )
@@ -76,6 +78,22 @@ class DataEntry(peewee.Model):
             return self.total_confirmed - self.cured - self.death
         return None
 
+    # Calculate new severe cases in Hubei when official report does not
+    # include this stat.
+    @property
+    def hb_new_severe_calc(self):
+        if self.hb_new_severe is not None:
+            return self.hb_new_severe
+        if self.hb_remaining_severe is not None:
+            prev_day = self.date - datetime.timedelta(days=1)
+            try:
+                prev_day_entry = DataEntry.get(date=prev_day)
+            except peewee.DoesNotExist:
+                return None
+            if prev_day_entry.hb_remaining_severe is not None:
+                return self.hb_remaining_severe - prev_day_entry.hb_remaining_severe
+        return None
+
 
 database.create_tables([DataEntry], safe=True)
 
@@ -98,8 +116,10 @@ def fetch_dom(url):
     logger.info(f"fetching {url}")
     run(("chrome-cli", "open", url))
     time.sleep(3)
-    yield run(("chrome-cli", "source"), capture=True)
-    run(("chrome-cli", "close"))
+    try:
+        yield run(("chrome-cli", "source"), capture=True)
+    finally:
+        run(("chrome-cli", "close"))
 
 
 def get_article_list():
@@ -142,6 +162,8 @@ def get_article(url):
     print(body)
     return title, body
 
+
+title_pattern = re.compile(r"^(?P<until>截至)?(?P<month>\d+)月(?P<day>\d+)日\w+疫情(最新)?情况$")
 
 patterns = {
     "new_confirmed": r"新增\w*确诊(病例|患者)?(?P<new_confirmed>\d+)例",
@@ -304,7 +326,7 @@ def main():
                     entry.hb_cured,
                     entry.hb_death,
                     entry.hb_new_confirmed,
-                    entry.hb_new_severe,
+                    entry.hb_new_severe_calc,
                     entry.hb_new_suspected,
                     entry.hb_new_cured,
                     entry.hb_new_death,

@@ -181,7 +181,7 @@ def setup():
         children=[
             html.H1(children="新型冠状病毒肺炎疫情历史数据"),
             DangerouslySetInnerHTML(
-                """<p class="app-note app-note--center">全部数据来自<a href="http://www.nhc.gov.cn/yjb/pqt/new_list.shtml" target="_blank">国家卫生健康委员会卫生应急办公室网站</a></p>
+                """<p class="app-note app-note--center">数据主要来自<a href="http://www.nhc.gov.cn/yjb/pqt/new_list.shtml" target="_blank">国家卫生健康委员会卫生应急办公室网站</a></p>
                 <p class="app-note app-note--center">更多数据：<a href="https://news.qq.com/zt2020/page/feiyan.htm" target="_blank">腾讯新闻疫情实时追踪<a></p>"""
             ),
             dcc.Tabs(
@@ -198,7 +198,10 @@ def setup():
                 className="app-tabs-container",
             ),
             DangerouslySetInnerHTML(
-                """<p class="app-note">注1：2月6日前卫健委未直接发布“当前确诊”数据，表中数据系通过“当前确诊=累计确诊&minus;治愈&minus;死亡”计算补充。该计算方法与2月6日起卫健委直接发布的数据相符。</p>"""
+                """<p class="app-note">注1：2月6日前卫健委未直接发布“当前确诊”数据，表中数据系通过“当前确诊=累计确诊&minus;治愈&minus;死亡”计算补充。该计算方法与2月6日起卫健委直接发布的数据相符。</p>
+                <p class="app-note">注2：2月12日起卫建委未直接发布“湖北新重症”数据，表中数据系通过“湖北当前重症”较前日的增量计算补充。该计算方法与2月12日前直接发布的数据相符。</p>
+                <p class="app-note">注3：2月12日前部分国家卫建委未公示的湖北省数据来自<a href="http://wjw.hubei.gov.cn/fbjd/tzgg/index.shtml" target="_blank">湖北省卫建委网站</a>。</p>
+                """
             ),
             dcc.Tabs(
                 [
