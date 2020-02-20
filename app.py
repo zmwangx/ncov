@@ -236,8 +236,8 @@ def setup():
             ),
             DangerouslySetInnerHTML(
                 """<p class="app-note">注1：2月6日前卫健委未直接发布“当前确诊”数据，表中数据系通过“当前确诊=累计确诊&minus;治愈&minus;死亡”计算补充。该计算方法与2月6日起卫健委直接发布的数据相符。</p>
-                <p class="app-note">注2：2月12日起卫建委未直接发布“湖北新重症”数据，表中数据系通过“湖北当前重症”较前日的增量计算补充。该计算方法与2月12日前直接发布的数据相符。</p>
-                <p class="app-note">注3：2月12日前部分国家卫建委未公示的湖北省数据来自<a href="http://wjw.hubei.gov.cn/fbjd/tzgg/index.shtml" target="_blank">湖北省卫建委网站</a>。</p>
+                <p class="app-note">注2：2月12日起卫健委未直接发布“湖北新重症”数据，表中数据系通过“湖北当前重症”较前日的增量计算补充。该计算方法与2月12日前直接发布的数据相符。</p>
+                <p class="app-note">注3：2月12日前部分国家卫健委未公示的湖北省数据来自<a href="http://wjw.hubei.gov.cn/fbjd/tzgg/index.shtml" target="_blank">湖北省卫健委网站</a>。</p>
                 <p class="app-note">注4：非湖北数据仅限我国，系相应全国数据减去相应湖北数据所得。</p>
                 """
             ),
