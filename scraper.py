@@ -144,7 +144,7 @@ def fetch_dom(url):
         run(("chrome-cli", "close"))
 
 
-def get_article_list():
+def get_article_list(seen_urls):
     @network_retry
     def get_single_page(index_url):
         results = []
@@ -162,7 +162,11 @@ def get_article_list():
     index_url = "http://www.nhc.gov.cn/yjb/pqt/new_list.shtml"
     while True:
         articles.extend(get_single_page(index_url))
-        if articles[-1][1] == "1月21日新型冠状病毒感染的肺炎疫情情况":
+        last_article_url, last_article_title = articles[-1]
+        if (
+            last_article_title == "1月21日新型冠状病毒感染的肺炎疫情情况"
+            or last_article_url in seen_urls
+        ):
             break
         page += 1
         index_url = f"http://www.nhc.gov.cn/yjb/pqt/new_list_{page}.shtml"
@@ -280,7 +284,7 @@ def parse_article(title, body):
 
 def main():
     recorded_urls = set(entry.article_url for entry in DataEntry.select())
-    articles = get_article_list()
+    articles = get_article_list(recorded_urls)
     for url, _ in articles:
         if url in recorded_urls:
             continue
