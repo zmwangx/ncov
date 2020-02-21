@@ -231,7 +231,6 @@ def setup():
                     )
                     for label, table in tables
                 ],
-                id="table-tabs",
                 className="app-tabs-container",
             ),
             DangerouslySetInnerHTML(
