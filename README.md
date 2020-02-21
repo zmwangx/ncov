@@ -13,8 +13,7 @@ The frontend is created using [Plotly Dash](https://plot.ly/dash/).
 The site is currently deployed on GAE. Deployment:
 
 ```shell
-make gcp
-cd deploy/gcp && gcloud app deploy
+make gcp && cd deploy/gcp && gcloud app deploy && cd ../..
 ```
 
 ### WSGI
